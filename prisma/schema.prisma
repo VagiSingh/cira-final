@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql" // Use your actual DB type
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+enum UserRole {
+  ADMIN
+  STAFF
+  STUDENT
+}
+
+model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  password String
+  name     String
+  role     UserRole @default(STUDENT)
+  reports  Report[]
+   sosAlerts SOSAlert[]
+}
+
+model Report {
+  id          String      @id @default(cuid())
+  reportId    String      @unique
+  title       String
+  description String
+  type        ReportType
+  location    String
+  anonymous   Boolean     @default(false)
+  image       String?
+  createdAt   DateTime    @default(now())
+  status      Status      @default(PENDING)
+  user        User?       @relation(fields: [userId], references: [id])
+  userId      String?
+}
+
+
+enum ReportType {
+  SAFETY
+  FACILITY
+  HARASSMENT
+  OTHER
+}
+
+enum Status {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  DISMISSED
+}
+
+model SOSAlert {
+  id        String   @id @default(cuid())
+  location  String
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+}
