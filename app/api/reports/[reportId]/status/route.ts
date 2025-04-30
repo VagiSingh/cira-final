@@ -4,13 +4,11 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
 // Handler for GET request - Fetch report by reportId
-export async function GET({ params }: { params: { reportId: string } }) {
+export async function GET(
+  req: Request,
+  { params }: { params: { reportId: string } }
+) {
   const session = await getServerSession(authOptions);
-
-  if (!session || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
     const report = await prisma.report.findUnique({
       where: { reportId: params.reportId },
