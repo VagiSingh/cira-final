@@ -3,10 +3,17 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
+// Define context type for params
+type RouteContext = {
+  params: {
+    reportId: string;
+  };
+};
+
 // Handler for GET request - Fetch report by reportId
-export async function GET(req: NextRequest, { params }: { params: { reportId: string } }) {
+export async function GET(req: NextRequest, context: RouteContext) {
   const session = await getServerSession(authOptions);
-  const { reportId } = params; // Destructure params to get reportId
+  const { reportId } = context.params;
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -50,9 +57,9 @@ export async function GET(req: NextRequest, { params }: { params: { reportId: st
 }
 
 // Handler for POST request - Update status (ADMIN only)
-export async function POST(req: NextRequest, { params }: { params: { reportId: string } }) {
+export async function POST(req: NextRequest, context: RouteContext) {
   const session = await getServerSession(authOptions);
-  const { reportId } = params; // Destructure params to get reportId
+  const { reportId } = context.params;
 
   if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
