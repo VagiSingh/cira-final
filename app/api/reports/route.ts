@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import prisma from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
-import { writeFile } from "fs/promises";
-import path from "path";
 import { randomUUID } from "crypto";
 import { ReportType } from "@prisma/client";
+import { supabase } from "@/lib/supabaseClient";
+
 export async function GET() {
   const session = await getServerSession(authOptions);
-  
+
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -17,7 +17,7 @@ export async function GET() {
     const isAdmin = session.user.role === "ADMIN";
 
     const reports = await prisma.report.findMany({
-      where: isAdmin ? {} : { userId: session.user.id }, // 👈 fetch all if admin
+      where: isAdmin ? {} : { userId: session.user.id },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -28,8 +28,8 @@ export async function GET() {
         description: true,
         location: true,
         createdAt: true,
-        anonymous: true,    
-    image: true, 
+        anonymous: true,
+        image: true,
         user: {
           select: {
             name: true,
@@ -38,11 +38,12 @@ export async function GET() {
         },
       },
     });
+
     const transformedReports = reports.map((report) => ({
       ...report,
       imageUrl: report.image,
     }));
-    
+
     return NextResponse.json(transformedReports);
   } catch (error) {
     console.error("GET /api/reports error:", error);
@@ -51,9 +52,7 @@ export async function GET() {
       { status: 500 }
     );
   }
-  
 }
-
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -75,15 +74,23 @@ export async function POST(req: Request) {
     let imageUrl: string | null = null;
 
     if (imageFile && imageFile.size > 0) {
-      const bytes = await imageFile.arrayBuffer();
-      const buffer = Buffer.from(bytes);
+      const arrayBuffer = await imageFile.arrayBuffer();
+      const buffer = new Uint8Array(arrayBuffer);
+      const fileExt = imageFile.name.split(".").pop();
+      const fileName = `${randomUUID()}.${fileExt}`;
 
-      const filename = `${randomUUID()}-${imageFile.name}`;
-      const filepath = path.join(process.cwd(), "public", "uploads", filename);
+      const { error } = await supabase.storage
+        .from("report-images") // Corrected bucket name
+        .upload(fileName, buffer, {
+          contentType: imageFile.type,
+        });
 
-      await writeFile(filepath, buffer);
+      if (error) {
+        throw error;
+      }
 
-      imageUrl = `/uploads/${filename}`;
+      const { data } = supabase.storage.from("report-images").getPublicUrl(fileName);
+      imageUrl = data.publicUrl;
     }
 
     const report = await prisma.report.create({
@@ -94,11 +101,10 @@ export async function POST(req: Request) {
         location,
         image: imageUrl,
         reportId: `RPT-${Math.floor(100000 + Math.random() * 900000)}`,
-        userId: session.user.id, // ✅ always associate with user
-        anonymous, // ✅ flag to hide identity
+        userId: session.user.id,
+        anonymous,
       },
     });
-    
 
     return NextResponse.json({
       success: true,
@@ -106,6 +112,9 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("Report POST Error:", error);
-    return NextResponse.json({ error: "Failed to create report" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create report" },
+      { status: 500 }
+    );
   }
 }
