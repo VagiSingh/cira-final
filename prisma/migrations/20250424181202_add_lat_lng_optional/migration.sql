@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "SOSAlert" ADD COLUMN     "latitude" DOUBLE PRECISION,
+ADD COLUMN     "longitude" DOUBLE PRECISION;

@@ -1,34 +1,66 @@
-// /pages/api/sos.ts
 
-import { NextApiRequest, NextApiResponse } from 'next';
-import prisma from '@/lib/prisma';  // assuming you have prisma setup
 
-// Handle the POST request to send SOS
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
-    const { location, userId } = req.body;
+// app/api/sos/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import prisma from "@/lib/prisma";
 
-    if (!location || !userId) {
-      return res.status(400).json({ error: 'Location and userId are required' });
-    }
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
 
-    try {
-      // Create a new SOSAlert in the database
-      const SOSAlert = await prisma.sOSAlert.create({
-        data: {
-          location,
-          userId,
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { latitude, longitude } = await req.json();
+
+  try {
+    await prisma.sOSAlert.create({
+      data: {
+        latitude,
+        longitude,
+        location: `Lat: ${latitude}, Long: ${longitude}`, // required field
+        userId: session.user.id,
+      },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("SOS POST error:", error);
+    return NextResponse.json({ error: "Failed to save SOS alert" }, { status: 500 });
+  }
+}
+
+
+export async function GET() {
+  const session = await getServerSession(authOptions);
+
+  if (!session || session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+
+    const alerts = await prisma.sOSAlert.findMany({
+      where: {
+        createdAt: {
+          gte: fifteenMinutesAgo,
         },
-      });
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: {
+          select: { name: true, email: true },
+        },
+      },
+    });
 
-      // You can add logic here to notify the admin, e.g., via email or a real-time service
-
-      return res.status(200).json({ success: true, SOSAlert });
-    } catch (error) {
-      console.error('Error saving SOS alert:', error);
-      return res.status(500).json({ error: 'Error processing SOS alert' });
-    }
-  } else {
-    res.status(405).json({ error: 'Method Not Allowed' });
+    console.log("Fetched SOS Alerts:", alerts);  // Check if you get multiple alerts here
+    return NextResponse.json(alerts);
+  } catch (error) {
+    console.error("SOS GET error:", error);
+    return NextResponse.json({ error: "Failed to fetch alerts" }, { status: 500 });
   }
 }

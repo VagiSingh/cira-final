@@ -64,9 +64,11 @@ enum Status {
 }
 
 model SOSAlert {
-  id        String   @id @default(cuid())
-  location  String
-  createdAt DateTime @default(now())
-  user      User?    @relation(fields: [userId], references: [id])
-  userId    String?
+  id         String   @id @default(cuid())
+  latitude   Float?   // <- make optional
+  longitude  Float?   // <- make optional
+  location   String
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String?
 }

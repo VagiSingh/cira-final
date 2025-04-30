@@ -38,8 +38,12 @@ export async function GET() {
         },
       },
     });
-
-    return NextResponse.json(reports);
+    const transformedReports = reports.map((report) => ({
+      ...report,
+      imageUrl: report.image,
+    }));
+    
+    return NextResponse.json(transformedReports);
   } catch (error) {
     console.error("GET /api/reports error:", error);
     return NextResponse.json(
@@ -87,14 +91,14 @@ export async function POST(req: Request) {
         title,
         description,
         type: type as ReportType,
-
         location,
         image: imageUrl,
         reportId: `RPT-${Math.floor(100000 + Math.random() * 900000)}`,
-        userId: anonymous ? null : session.user.id,
-        anonymous,
+        userId: session.user.id, // ✅ always associate with user
+        anonymous, // ✅ flag to hide identity
       },
     });
+    
 
     return NextResponse.json({
       success: true,

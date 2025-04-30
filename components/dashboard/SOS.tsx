@@ -12,40 +12,33 @@ export default function SOS() {
     setMessage(null); // Reset any previous messages
 
     try {
-      // Fetch the user's current location
-      const userLocation = await getCurrentLocation();
+      const { latitude, longitude } = await getCurrentLocation();
 
-      // Get the user ID (assuming it's available in the session or context)
-      const userId = 'userId';  // Replace this with actual user ID from session or context
+      const success = await sendSOSLocation(latitude, longitude);
 
-      // Send the SOS location to the backend (admin)
-      const success = await sendSOSLocation(userLocation, userId);
-
-      // Show success or failure message based on the result
-      if (success) {
-        setMessage("Location sent to admin.");
-      } else {
-        setMessage("Failed to send location to admin. Please try again.");
-      }
+      setMessage(success ? "Location sent to admin." : "Failed to send location.");
     } catch (err) {
-      console.error("Error sending SOS:", err);
-      setMessage("Failed to fetch your location. Please enable location services.");
+      setMessage("Failed to fetch your location.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Function to fetch the user's current location using geolocation
-  const getCurrentLocation = (): Promise<string> => {
+  const getCurrentLocation = (): Promise<{ latitude: number; longitude: number }> => {
     return new Promise((resolve, reject) => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
-            resolve(`Lat: ${latitude.toFixed(4)}, Long: ${longitude.toFixed(4)}`);
+            resolve({ latitude, longitude });
           },
           (error) => {
             reject("Unable to retrieve your location.");
+          },
+          {
+            enableHighAccuracy: true,   
+            timeout: 10000,
+            maximumAge: 0,
           }
         );
       } else {
@@ -53,9 +46,10 @@ export default function SOS() {
       }
     });
   };
-
-  // Function to send the SOS alert to the backend (to /api/sos)
-  const sendSOSLocation = async (location: string, userId: string): Promise<boolean> => {
+  
+  
+  // Updated sendSOSLocation to send latitude and longitude
+  const sendSOSLocation = async (latitude: number, longitude: number) => {
     try {
       const response = await fetch("/api/sos", {
         method: "POST",
@@ -63,24 +57,20 @@ export default function SOS() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          location,
-          userId,
+          latitude,
+          longitude,
+          location: `Lat: ${latitude.toFixed(3)}, Lng: ${longitude.toFixed(3)}`,
         }),
       });
-
+  
       const data = await response.json();
-      
-      if (response.ok && data.success) {
-        return true;
-      } else {
-        console.error("Error response from server:", data);
-        return false;
-      }
+      return response.ok && data.success;
     } catch (err) {
       console.error("Error while sending SOS location:", err);
       return false;
     }
   };
+  
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
@@ -97,7 +87,9 @@ export default function SOS() {
       {/* Confirmation or error message */}
       {message && (
         <div
-          className={`mt-2 text-sm font-medium ${message.includes("Failed") ? "text-red-500" : "text-green-500"}`}
+          className={`mt-2 text-sm font-medium ${
+            message.includes("Failed") ? "text-red-500" : "text-green-500"
+          }`}
         >
           {message}
         </div>
