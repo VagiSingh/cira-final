@@ -1,17 +1,13 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
-// Define context type for params
-type RouteContext = {
-  params: {
-    reportId: string;
-  };
-};
-
-// Handler for GET request - Fetch report by reportId
-export async function GET(req: NextRequest, context: RouteContext) {
+// GET handler
+export async function GET(
+  req: NextRequest,
+  context: { params: { reportId: string } }
+) {
   const session = await getServerSession(authOptions);
   const { reportId } = context.params;
 
@@ -46,7 +42,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
     }
 
     if (!report) {
-      return NextResponse.json({ error: "Report not found or not accessible" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Report not found or not accessible" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(report);
@@ -56,8 +55,11 @@ export async function GET(req: NextRequest, context: RouteContext) {
   }
 }
 
-// Handler for POST request - Update status (ADMIN only)
-export async function POST(req: NextRequest, context: RouteContext) {
+// POST handler
+export async function POST(
+  req: NextRequest,
+  context: { params: { reportId: string } }
+) {
   const session = await getServerSession(authOptions);
   const { reportId } = context.params;
 
