@@ -1,7 +1,7 @@
 'use client';
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { UploadIcon, UserXIcon, ShieldAlertIcon } from "lucide-react";
+import { UploadIcon, UserXIcon } from "lucide-react";
 
 export function ReportForm() {
   const router = useRouter();

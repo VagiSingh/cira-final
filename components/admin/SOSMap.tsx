@@ -15,7 +15,7 @@ const DefaultIcon = L.icon({
   shadowUrl: markerShadow,
 });
 L.Marker.prototype.options.icon = DefaultIcon;
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function SOSMap({ alerts }: { alerts: any[] }) {
   const defaultCenter = alerts.length
     ? [alerts[0].latitude, alerts[0].longitude]

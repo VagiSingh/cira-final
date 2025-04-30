@@ -101,10 +101,11 @@ export async function POST(req: Request) {
         location,
         image: imageUrl,
         reportId: `RPT-${Math.floor(100000 + Math.random() * 900000)}`,
-        userId: session.user.id,
         anonymous,
+        ...(anonymous ? {} : { userId: session.user.id }),
       },
     });
+    
 
     return NextResponse.json({
       success: true,

@@ -6,8 +6,14 @@ import dynamic from "next/dynamic";
 
 const MapWithMarkers = dynamic(() => import("@/components/admin/SOSMap"), { ssr: false });
 
+interface SOSAlert {
+  latitude: number;
+  longitude: number;
+  location: string;
+}
+
 export default function AdminMapPage() {
-  const [alerts, setAlerts] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<SOSAlert[]>([]);
 
   useEffect(() => {
     const fetchAlerts = async () => {

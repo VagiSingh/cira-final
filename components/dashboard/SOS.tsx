@@ -18,7 +18,8 @@ export default function SOS() {
 
       setMessage(success ? "Location sent to admin." : "Failed to send location.");
     } catch (err) {
-      setMessage("Failed to fetch your location.");
+      console.error("Failed to fetch your location.",err)
+      setMessage("Failed to fetch your location.",);
     } finally {
       setIsLoading(false);
     }
@@ -33,6 +34,7 @@ export default function SOS() {
             resolve({ latitude, longitude });
           },
           (error) => {
+            console.error(error)
             reject("Unable to retrieve your location.");
           },
           {

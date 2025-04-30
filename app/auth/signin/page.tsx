@@ -36,6 +36,7 @@ export default function SignIn() {
         }
       }
     } catch (error) {
+      console.error(error)
       setError("An error occurred during sign in");
     } finally {
       setIsLoading(false);
@@ -146,7 +147,7 @@ export default function SignIn() {
           </form>
 
           <div className="mt-6 text-center text-sm">
-            <span className="text-neutral-400">Don't have an account?</span>{" "}
+            <span className="text-neutral-400">Don&apos;t have an account?</span>{" "}
             <Link href="/auth/signup" className="text-blue-500 hover:text-blue-400 font-medium">
               Sign up
             </Link>

@@ -74,6 +74,7 @@ export default function AdminPage() {
         alert('Failed to update status');
       }
     } catch (error) {
+      console.log(error)
       alert('Error updating status');
     }
   };
@@ -203,15 +204,17 @@ export default function AdminPage() {
   );
 }
 
+interface StatusUpdaterProps {
+  reportId: string;
+  currentStatus: string;
+  updateStatus: (reportId: string, status: string) => void;
+}
+
 function StatusUpdater({
   reportId,
   currentStatus,
   updateStatus,
-}: {
-  reportId: string;
-  currentStatus: string;
-  updateStatus: Function;
-}) {
+}: StatusUpdaterProps) {
   const [status, setStatus] = useState(currentStatus);
 
   return (
