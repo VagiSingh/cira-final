@@ -4,12 +4,9 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
 // GET handler
-export async function GET(
-  req: NextRequest,
-  context: { params: { reportId: string } }
-) {
+export async function GET(req: NextRequest, context: any) {
   const session = await getServerSession(authOptions);
-  const { reportId } = context.params;
+  const reportId = context?.params?.reportId;
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -49,19 +46,16 @@ export async function GET(
     }
 
     return NextResponse.json(report);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("GET /reportId error:", error);
     return NextResponse.json({ error: "Failed to fetch report" }, { status: 500 });
   }
 }
 
 // POST handler
-export async function POST(
-  req: NextRequest,
-  context: { params: { reportId: string } }
-) {
+export async function POST(req: NextRequest, context: any) {
   const session = await getServerSession(authOptions);
-  const { reportId } = context.params;
+  const reportId = context?.params?.reportId;
 
   if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -89,7 +83,7 @@ export async function POST(
     });
 
     return NextResponse.json(updated);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("POST /reportId error:", error);
     return NextResponse.json({ error: "Failed to update status" }, { status: 500 });
   }
